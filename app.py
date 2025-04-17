@@ -10,7 +10,7 @@ import re
 app = Flask(__name__)
 
 # Allow CORS only for your frontend domain
-CORS(app, resources={r"/*": {"origins": "https://sign-sense-india-ai-95-jhmk.vercel.app"}})
+CORS(app, resources={r"/*": {"origins": "https://sign-sense-india-ai-95.vercel.app"}})
 
 # Load model and initialize MediaPipe Hands
 model_path = 'sign_model/sign101/model.p'  # Adjust as needed
