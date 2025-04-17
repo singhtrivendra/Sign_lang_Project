@@ -8,7 +8,9 @@ import mediapipe as mp
 import re
 
 app = Flask(__name__)
-CORS(app)  # Enable CORS for all routes
+
+# Allow CORS only for your frontend domain
+CORS(app, resources={r"/*": {"origins": "https://sign-sense-india-ai-95-jhmk.vercel.app"}})
 
 # Load model and initialize MediaPipe Hands
 model_path = 'sign_model/sign101/model.p'  # Adjust as needed
@@ -29,29 +31,20 @@ def check_detect():
 @app.route('/detect', methods=['POST'])
 def detect_sign():
     try:
-        # Get the image data from the request
         content = request.json
         image_data = content['image']
-
-        # Remove base64 header if present
         base64_data = re.sub('^data:image/.+;base64,', '', image_data)
 
-        # Decode base64 string to OpenCV image
         img_bytes = base64.b64decode(base64_data)
         img_arr = np.frombuffer(img_bytes, np.uint8)
         frame = cv2.imdecode(img_arr, cv2.IMREAD_COLOR)
 
-        # Convert BGR to RGB
         frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-
-        # Process the frame for hands
         results = hands.process(frame_rgb)
 
         if results.multi_hand_landmarks:
             for hand_landmarks in results.multi_hand_landmarks:
-                x_ = []
-                y_ = []
-                data_aux = []
+                x_, y_, data_aux = [], [], []
 
                 for lm in hand_landmarks.landmark:
                     x_.append(lm.x)
@@ -62,7 +55,7 @@ def detect_sign():
                     data_aux.append(lm.y - min(y_))
 
                 if len(data_aux) == 42:
-                    prediction = model.predict([np.asarray(data_aux)])[0]  # e.g., 'a'
+                    prediction = model.predict([np.asarray(data_aux)])[0]
                     probabilities = model.predict_proba([np.asarray(data_aux)])[0]
                     confidence = float(probabilities[model.classes_.tolist().index(prediction)])
                     predicted_character = prediction.upper()
